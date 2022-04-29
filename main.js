@@ -12,7 +12,7 @@ const tableIds = {
 
 let state = {
   airtable_key: '',
-  portfolio: [],
+  portfolio: {},
 }
 
 function setAirtableKey(key) {
@@ -35,9 +35,11 @@ loadState()
 function loadAirtable() {
   Promise.all([companyRecords(), levelProgression()]).then(([company_data, company_levels]) => {
     for (const [id, data] of Object.entries(company_data)) {
-      state.portfolio.push({ ...data, levels: company_levels[id] })
+      
+      state.portfolio[id] = { ...data, levels: company_levels[id] }
     }
     render();
+    setTimeout(loadAirtable, 5*60*1000);
   }, (reason) => {
     if (reason == 401) {
       setAirtableKey('');
@@ -53,9 +55,9 @@ function render() {
     document.getElementById('access_form').classList.add('hidden');
 
     const levels = document.getElementById('company_levels')
-    const non_header = levels.querySelectorAll('div.header');
-    levels.replaceChildren(...non_header);
-    for (company of state.portfolio) {
+    const headers = levels.querySelectorAll('div.header');
+    levels.replaceChildren(...headers);
+    for (const [id, company] of Object.entries(state.portfolio)) {
       const logo = document.createElement('img');
       logo.setAttribute('src', company.logo_url);
       const level1 = document.createElement('div');
