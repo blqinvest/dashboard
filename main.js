@@ -1,3 +1,5 @@
+'use strict';
+
 const fieldIds = {
   'company': 'fldIYYt9CfqrDJGtH',
   'status': 'fldELamP8lmU4aSUs',
@@ -39,14 +41,11 @@ function loadState() {
     setAirtableKey(key)
     render();
   }
-  uglylog('State loaded')
 }
 loadState()
 
 function loadAirtable() {
   Promise.all([companyRecords(), levelProgression()]).then(([company_data, company_levels]) => {
-
-    uglylog('Got both data points')
     for (const [id, data] of Object.entries(company_data)) {
       
       state.portfolio[id] = { ...data, levels: company_levels[id] }
@@ -66,23 +65,42 @@ function render() {
   if (state.airtable_key === '') {
     document.getElementById('access_form').classList.remove('hidden');
   } else {
+
+    uglylog('1')
     document.getElementById('access_form').classList.add('hidden');
 
+    uglylog('2')
     const levels = document.getElementById('company_levels')
+
+    uglylog('3')
     const headers = levels.querySelectorAll('div.header');
+
+    uglylog('4')
     levels.replaceChildren(...headers);
     uglylog('children replaced')
     for (const [id, company] of Object.entries(state.portfolio)) {
+
+      uglylog('5')
       const logo = document.createElement('img');
+
+      uglylog('6')
       logo.setAttribute('src', company.logo_url);
+      uglylog('7')
       const level1 = document.createElement('div');
+      uglylog('8')
       level1.textContent = company.levels['1']
+      uglylog('9')
       const level2 = document.createElement('div');
+      uglylog('10')
       level2.textContent = company.levels['2']
+      uglylog('11')
       const level3 = document.createElement('div');
+      uglylog('12')
       level3.textContent = company.levels['3']
+      uglylog('13')
       uglylog('appending new children', id, company)
       levels.append(logo, level1, level2, level3)
+      uglylog('14')
     }
   }
 }
@@ -110,9 +128,8 @@ function companyRecords (offset = 0, records = []) {
     }
     return records;
   }).then((companies) => {
-    uglylog('Got companies')
     let companies_neat = {}
-    for (company of companies) {
+    for (const company of companies) {
       companies_neat[company.id] = {
         name: company.fields[fieldIds['company_name']],
         logo_url: company.fields[fieldIds['company_logo']][0].url
@@ -124,7 +141,6 @@ function companyRecords (offset = 0, records = []) {
 
 function levelProgression () {
   return projectStatuses().then((statuses) => {
-    uglylog('To levels')
     let progression = {}
     for (const [company, levels] of Object.entries(statuses)) {
       progression[company] = {}
@@ -152,7 +168,6 @@ function levelProgression () {
 
 function projectStatuses () {
   return projectRecords().then((records) => {
-    uglylog('To statuses')
     let companies = {}; // company, level, status
     for (const record of records) {
       const company = record.fields[fieldIds['company']][0];
@@ -183,7 +198,6 @@ function projectRecords (offset = 0, records = []) {
     'fields%5B%5D=' + fieldIds['status'] + '&' + // Status
     'fields%5B%5D=' + fieldIds['level'] + '&' // Level
   ).then((data) => {
-    uglylog('Records projected')
     records.push(...data.records)
     if ('offset' in data) {
       offset = data.offset;
@@ -197,9 +211,6 @@ function airtableRequest(offset, tableId, resource) {
   const root = 'https://api.airtable.com/v0';  
   const baseId = 'app9dUa1gS9KZd7Vy';
 
-
-
-  uglylog('fetching', tableId, resource)
   return fetch(
     root + '/' +
     baseId + '/' +
@@ -211,7 +222,6 @@ function airtableRequest(offset, tableId, resource) {
       }
     }
   ).then((response) => {
-    uglylog('got response', response)
     if (response.status == 401) {
       return Promise.reject(401);
     }
