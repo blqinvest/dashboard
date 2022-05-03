@@ -62,7 +62,6 @@ function loadAirtable() {
 }
 
 function render() {
-
   uglylog('rendering', state)
   if (state.airtable_key === '') {
     document.getElementById('access_form').classList.remove('hidden');
@@ -72,6 +71,7 @@ function render() {
     const levels = document.getElementById('company_levels')
     const headers = levels.querySelectorAll('div.header');
     levels.replaceChildren(...headers);
+    uglylog('children replaced')
     for (const [id, company] of Object.entries(state.portfolio)) {
       const logo = document.createElement('img');
       logo.setAttribute('src', company.logo_url);
@@ -81,6 +81,7 @@ function render() {
       level2.textContent = company.levels['2']
       const level3 = document.createElement('div');
       level3.textContent = company.levels['3']
+      uglylog('appending new children', id, company)
       levels.append(logo, level1, level2, level3)
     }
   }
