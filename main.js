@@ -29,11 +29,14 @@ function loadState() {
     setAirtableKey(key)
     render();
   }
+  console.re.log('State loaded')
 }
 loadState()
 
 function loadAirtable() {
   Promise.all([companyRecords(), levelProgression()]).then(([company_data, company_levels]) => {
+
+    console.re.log('Got both data points')
     for (const [id, data] of Object.entries(company_data)) {
       
       state.portfolio[id] = { ...data, levels: company_levels[id] }
@@ -49,6 +52,8 @@ function loadAirtable() {
 }
 
 function render() {
+
+  console.re.log('rendering', state)
   if (state.airtable_key === '') {
     document.getElementById('access_form').classList.remove('hidden');
   } else {
@@ -94,6 +99,7 @@ function companyRecords (offset = 0, records = []) {
     }
     return records;
   }).then((companies) => {
+    console.re.log('Got companies')
     let companies_neat = {}
     for (company of companies) {
       companies_neat[company.id] = {
@@ -107,6 +113,7 @@ function companyRecords (offset = 0, records = []) {
 
 function levelProgression () {
   return projectStatuses().then((statuses) => {
+    console.re.log('To levels')
     let progression = {}
     for (const [company, levels] of Object.entries(statuses)) {
       progression[company] = {}
@@ -134,6 +141,7 @@ function levelProgression () {
 
 function projectStatuses () {
   return projectRecords().then((records) => {
+    console.re.log('To statuses')
     let companies = {}; // company, level, status
     for (const record of records) {
       const company = record.fields[fieldIds['company']][0];
@@ -164,6 +172,7 @@ function projectRecords (offset = 0, records = []) {
     'fields%5B%5D=' + fieldIds['status'] + '&' + // Status
     'fields%5B%5D=' + fieldIds['level'] + '&' // Level
   ).then((data) => {
+    console.re.log('Records projected')
     records.push(...data.records)
     if ('offset' in data) {
       offset = data.offset;
@@ -177,6 +186,9 @@ function airtableRequest(offset, tableId, resource) {
   const root = 'https://api.airtable.com/v0';  
   const baseId = 'app9dUa1gS9KZd7Vy';
 
+
+
+  console.re.log('fetching', tableId, resource)
   return fetch(
     root + '/' +
     baseId + '/' +
@@ -188,6 +200,7 @@ function airtableRequest(offset, tableId, resource) {
       }
     }
   ).then((response) => {
+    console.re.log('got response', response)
     if (response.status == 401) {
       return Promise.reject(401);
     }
