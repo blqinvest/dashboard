@@ -18,7 +18,7 @@ let state = {
 function uglylog(...items) {
   let string = []
   for (const item of items) {
-    string = string + item.toString();
+    string = string + JSON.stringify(item);
   }
   var node = document.createElement('p')
   node.innerText = string;
