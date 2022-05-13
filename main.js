@@ -73,16 +73,19 @@ function render() {
     const levels = document.getElementById('company_levels')
 
     uglylog('3')
-    const headers = levels.querySelectorAll('div.header');
-
+    //const headers = levels.querySelectorAll('.header');
+    //levels.replaceChildren(...headers);
+    const headers = levels.querySelectorAll('* > *:not(.header)');
     uglylog('4')
-    levels.replaceChildren(...headers);
-    uglylog('children replaced')
+    for (const header of headers) {
+      uglylog('removing')
+      levels.removeChild(header);
+    }
+    uglylog('children removed')
     for (const [id, company] of Object.entries(state.portfolio)) {
 
       uglylog('5')
       const logo = document.createElement('img');
-
       uglylog('6')
       logo.setAttribute('src', company.logo_url);
       uglylog('7')
