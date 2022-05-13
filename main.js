@@ -61,49 +61,31 @@ function loadAirtable() {
 }
 
 function render() {
-  uglylog('rendering', state)
   if (state.airtable_key === '') {
     document.getElementById('access_form').classList.remove('hidden');
   } else {
 
-    uglylog('1')
     document.getElementById('access_form').classList.add('hidden');
 
-    uglylog('2')
     const levels = document.getElementById('company_levels')
 
-    uglylog('3')
     //const headers = levels.querySelectorAll('.header');
     //levels.replaceChildren(...headers);
     const headers = levels.querySelectorAll('* > *:not(.header)');
-    uglylog('4')
     for (const header of headers) {
-      uglylog('removing')
       levels.removeChild(header);
     }
-    uglylog('children removed')
     for (const [id, company] of Object.entries(state.portfolio)) {
 
-      uglylog('5')
       const logo = document.createElement('img');
-      uglylog('6')
       logo.setAttribute('src', company.logo_url);
-      uglylog('7')
       const level1 = document.createElement('div');
-      uglylog('8')
       level1.textContent = company.levels['1']
-      uglylog('9')
       const level2 = document.createElement('div');
-      uglylog('10')
       level2.textContent = company.levels['2']
-      uglylog('11')
       const level3 = document.createElement('div');
-      uglylog('12')
       level3.textContent = company.levels['3']
-      uglylog('13')
-      uglylog('appending new children', id, company)
       levels.append(logo, level1, level2, level3)
-      uglylog('14')
     }
   }
 }
