@@ -92,6 +92,7 @@ div#sourcing_stats {
   > div {
     display: flex;
     flex-flow: column nowrap;
+    align-items: center;
   }
   div {
     text-align: center;
@@ -101,6 +102,10 @@ div#sourcing_stats {
     font-family: $displayfonts;
     font-size: 10rem;
     line-height: 1em;
+  }
+  svg {
+    height: 4rem;
+    width: 10rem;
   }
 }
 

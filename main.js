@@ -112,8 +112,41 @@ function render() {
     }
 
     if ('screened' in state.sourcing_stats) {
-      document.getElementById('sourcing_screened').getElementsByClassName('number')[0].textContent = state.sourcing_stats.screened;
-      document.getElementById('sourcing_firstmeets').getElementsByClassName('number')[0].textContent = state.sourcing_stats.firstmeets;
+      const startdate_ms = new Date(startdate).getTime();
+
+      const screenedEl = document.getElementById('sourcing_screened');
+      screenedEl.getElementsByClassName('number')[0].textContent = state.sourcing_stats.screened.length;
+      for (const svgChild of screenedEl.querySelectorAll('svg')) {
+        levels.removeChild(svgChild);
+      }
+      state.sourcing_stats.screened.sort();
+      let screened_d = '';
+      const screened_ms = state.sourcing_stats.screened.map((date, i, arr) => {
+        const ms = new Date(date).getTime();
+        screened_d += ` ${ms - startdate_ms},${arr.length - i}`;
+        return ms;
+      })
+      screenedEl.insertAdjacentHTML('beforeend',
+        `<svg viewBox="0 0 ${ screened_ms[screened_ms.length-1] - startdate_ms } ${ screened_ms.length }" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path stroke="#00D6A2" stroke-width="5px" vector-effect="non-scaling-stroke" d="M0,${screened_ms.length} ${screened_d} ${ screened_ms[screened_ms.length-1] - startdate_ms },0" />
+        </svg>`)
+
+      const firstmeetsEl = document.getElementById('sourcing_firstmeets');
+      firstmeetsEl.getElementsByClassName('number')[0].textContent = state.sourcing_stats.firstmeets.length;
+      for (const svgChild of firstmeetsEl.querySelectorAll('svg')) {
+        levels.removeChild(svgChild);
+      }
+      state.sourcing_stats.firstmeets.sort();
+      let firstmeets_d = '';
+      const firstmeets_ms = state.sourcing_stats.firstmeets.map((date, i, arr) => {
+        const ms = new Date(date).getTime();
+        firstmeets_d += ` ${ms - startdate_ms},${arr.length - i}`;
+        return ms;
+      })
+      firstmeetsEl.insertAdjacentHTML('beforeend',
+        `<svg viewBox="0 0 ${ firstmeets_ms[firstmeets_ms.length-1] - startdate_ms } ${ firstmeets_ms.length }" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path stroke="#00D6A2" stroke-width="5px" vector-effect="non-scaling-stroke" d="M0,${firstmeets_ms.length} ${firstmeets_d} ${ firstmeets_ms[firstmeets_ms.length-1] - startdate_ms },0" />
+        </svg>`)
     } else {
       // maybe add throbber
     }
@@ -222,7 +255,7 @@ function projectRecords (offset = 0, records = []) {
   })
 }
 
-function sourcingStats(offset = 0, result = {screened: 0, firstmeets: 0}) {
+function sourcingStats(offset = 0, result = {screened: [], firstmeets: []}) {
   const today = new Date().toISOString().slice(0,10);
   return airtableRequest(baseIds['sourcing'],
     tableIds['deals'],
@@ -237,10 +270,10 @@ function sourcingStats(offset = 0, result = {screened: 0, firstmeets: 0}) {
       const screening_date = record.fields[fieldIds['screening_date']];
       const firstmeet_date = record.fields[fieldIds['firstmeet_date']];
       if ((startdate < screening_date) && (screening_date <= today)) {
-        result.screened += 1;
+        result.screened.push(screening_date);
       }
       if ((startdate < firstmeet_date) && (firstmeet_date <= today)) {
-        result.firstmeets += 1; 
+        result.firstmeets.push(firstmeet_date); 
       }
     }
     if ('offset' in data) {
