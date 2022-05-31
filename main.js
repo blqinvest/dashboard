@@ -1,20 +1,34 @@
 'use strict';
 
 const fieldIds = {
+  // in blq box
   'company': 'fldIYYt9CfqrDJGtH',
   'status': 'fldELamP8lmU4aSUs',
   'level': 'fldVLgUc6dLGo31NN',
   'company_name': 'fld7O4qm2eBnTJ2Mu',
-  'company_logo': 'fldKln7hK9S8LmQOH'
+  'company_logo': 'fldKln7hK9S8LmQOH',
+  // in sourcing
+  'screening_date': 'fldcRcIkUcQRXGlnV',
+  'firstmeet_date': 'fld6UckMqVoOloV0E'
 };
 const tableIds = {
+  // in blq box
   'projects': 'tblQw6TtqI6V92Tyy',
-  'companies': 'tblJKDKExLnSJU0S9'
+  'companies': 'tblJKDKExLnSJU0S9',
+  // in sourcing
+  'deals': 'tblMHayJBPtZjma4b',
 };
+const baseIds = {
+  'sourcing': 'appLAlyKBIAV9daa6',
+  'blqbox': 'app9dUa1gS9KZd7Vy',
+}
+// Starting date for sourcing stats
+const startdate = "2021-12-31"
 
 let state = {
   airtable_key: '',
   portfolio: {},
+  sourcing_stats: {},
 }
 
 function uglylog(...items) {
@@ -45,47 +59,63 @@ function loadState() {
 loadState()
 
 function loadAirtable() {
-  Promise.all([companyRecords(), levelProgression()]).then(([company_data, company_levels]) => {
-    for (const [id, data] of Object.entries(company_data)) {
-      
-      state.portfolio[id] = { ...data, levels: company_levels[id] }
-    }
-    render();
-    setTimeout(loadAirtable, 5*60*1000);
-  }, (reason) => {
+  const onError = (reason) => {
     if (reason == 401) {
       setAirtableKey('');
       render();
     }
-  });
+  }
+  const portfolio = Promise.all([companyRecords(), levelProgression()]).then(([company_data, company_levels]) => {
+    for (const [id, data] of Object.entries(company_data)) {
+      state.portfolio[id] = { ...data, levels: company_levels[id] }
+    }
+    render();
+  }, onError);
+  const sourcing_stats = sourcingStats().then((stats) => {
+    state.sourcing_stats = stats;
+    render();
+  }, onError);
+  Promise.all([portfolio, sourcing_stats]).then((_) => {
+    setTimeout(loadAirtable, 5*60*1000);
+  })
 }
 
 function render() {
   if (state.airtable_key === '') {
     document.getElementById('access_form').classList.remove('hidden');
   } else {
-
     document.getElementById('access_form').classList.add('hidden');
 
-    const levels = document.getElementById('company_levels')
+    if (Object.entries(state.portfolio).length > 0) {
+      const levels = document.getElementById('company_levels')
 
-    //const headers = levels.querySelectorAll('.header');
-    //levels.replaceChildren(...headers);
-    const headers = levels.querySelectorAll('* > *:not(.header)');
-    for (const header of headers) {
-      levels.removeChild(header);
+      //const headers = levels.querySelectorAll('.header');
+      //levels.replaceChildren(...headers);
+      const headers = levels.querySelectorAll('* > *:not(.header)');
+      for (const header of headers) {
+        levels.removeChild(header);
+      }
+      for (const [id, company] of Object.entries(state.portfolio)) {
+  
+        const logo = document.createElement('img');
+        logo.setAttribute('src', company.logo_url);
+        const level1 = document.createElement('div');
+        level1.textContent = company.levels['1']
+        const level2 = document.createElement('div');
+        level2.textContent = company.levels['2']
+        const level3 = document.createElement('div');
+        level3.textContent = company.levels['3']
+        levels.append(logo, level1, level2, level3)
+      }
+    } else {
+      // maybe add throbber
     }
-    for (const [id, company] of Object.entries(state.portfolio)) {
 
-      const logo = document.createElement('img');
-      logo.setAttribute('src', company.logo_url);
-      const level1 = document.createElement('div');
-      level1.textContent = company.levels['1']
-      const level2 = document.createElement('div');
-      level2.textContent = company.levels['2']
-      const level3 = document.createElement('div');
-      level3.textContent = company.levels['3']
-      levels.append(logo, level1, level2, level3)
+    if ('screened' in state.sourcing_stats) {
+      document.getElementById('sourcing_screened').getElementsByClassName('number')[0].textContent = state.sourcing_stats.screened;
+      document.getElementById('sourcing_firstmeets').getElementsByClassName('number')[0].textContent = state.sourcing_stats.firstmeets;
+    } else {
+      // maybe add throbber
     }
   }
 }
@@ -98,7 +128,7 @@ document.getElementById('access_form').addEventListener("submit", function (ev) 
 
 
 function companyRecords (offset = 0, records = []) {
-  return airtableRequest(offset,
+  return airtableRequest(baseIds['blqbox'],
     tableIds['companies'],
     '?' +
     'returnFieldsByFieldId=true' + '&' +
@@ -174,7 +204,7 @@ function projectStatuses () {
 }
 
 function projectRecords (offset = 0, records = []) {
-  return airtableRequest(offset,
+  return airtableRequest(baseIds['blqbox'],
     tableIds['projects'],
     '?' +
     'returnFieldsByFieldId=true' + '&' +
@@ -192,9 +222,36 @@ function projectRecords (offset = 0, records = []) {
   })
 }
 
-function airtableRequest(offset, tableId, resource) {
-  const root = 'https://api.airtable.com/v0';  
-  const baseId = 'app9dUa1gS9KZd7Vy';
+function sourcingStats(offset = 0, result = {screened: 0, firstmeets: 0}) {
+  const today = new Date().toISOString().slice(0,10);
+  return airtableRequest(baseIds['sourcing'],
+    tableIds['deals'],
+    '?' +
+    'returnFieldsByFieldId=true' + '&' +
+    'filterByFormula=OR(IS_AFTER(%7BScreening+date%7D%2C+%22' + startdate + '%22)%2C+IS_AFTER(%7BFirst+Meeting+date%7D%2C+%22' + startdate + '%22))' + '&' +
+    'offset=' + offset.toString() + '&' +
+    'fields%5B%5D=' + fieldIds['screening_date'] + '&' +
+    'fields%5B%5D=' + fieldIds['firstmeet_date']
+  ).then((data) => {
+    for (const record of data.records) {
+      const screening_date = record.fields[fieldIds['screening_date']];
+      const firstmeet_date = record.fields[fieldIds['firstmeet_date']];
+      if ((startdate < screening_date) && (screening_date <= today)) {
+        result.screened += 1;
+      }
+      if ((startdate < firstmeet_date) && (firstmeet_date <= today)) {
+        result.firstmeets += 1; 
+      }
+    }
+    if ('offset' in data) {
+      return sourcingStats(data.offset, result)
+    }
+    return result;
+  })
+}
+
+function airtableRequest(baseId, tableId, resource) {
+  const root = 'https://api.airtable.com/v0';
 
   return fetch(
     root + '/' +

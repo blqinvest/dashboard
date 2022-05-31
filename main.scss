@@ -61,6 +61,7 @@ input[type=text] {
 }
 
 div#company_levels {
+  padding: 2rem;
   display: grid;
   gap: 1rem 2rem;
   grid-template-columns: repeat(4, max-content);
@@ -76,4 +77,36 @@ div#company_levels {
     justify-content: center;
     align-items: center;
   }
+}
+
+div#sourcing_stats {
+  padding: 2rem;
+
+  display: grid;
+  gap: 1rem 2rem;
+  grid-template-columns: repeat(1, max-content);
+  place-content: center;
+
+  color: $lightgray;
+  background: 50% 25%/cover url("assets/jeremy-bishop-8xznAGy4HcY-unsplash.jpg");
+  > div {
+    display: flex;
+    flex-flow: column nowrap;
+  }
+  div {
+    text-align: center;
+    font-size: 2rem;
+  }
+  div.number {
+    font-family: $displayfonts;
+    font-size: 10rem;
+    line-height: 1em;
+  }
+}
+
+div#container {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  grid-template-rows: 100%;
+  place-content: center;
 }
